@@ -4,9 +4,11 @@
 # This application can be ran on the Raspberry Pi GoPiGo robot with a Sonar that represents Nose Touch when activated
 # To run standalone without a GoPiGo robot, simply comment out the sections with Start and End comments 
 ## Start Comment
-from gopigo import *
+from easygopigo3 import EasyGoPiGo3
 ## End Comment
 import time
+
+robot = EasyGoPiGo3()
 
 # The postsynaptic dictionary contains the accumulated weighted values as the
 # connectome is executed
@@ -4801,39 +4803,39 @@ def motorcontrol():
                 new_speed = 150
         elif new_speed < 75:
                 new_speed = 75
-        print "Left: ", accumleft, "Right:", accumright, "Speed: ", new_speed
+        print("Left: ", accumleft, "Right:", accumright, "Speed: ", new_speed)
         ## Start Commented section
-        set_speed(new_speed)
+        robot.set_speed(new_speed)
         if accumleft == 0 and accumright == 0:
-                stop()
+                robot.stop()
         elif accumright <= 0 and accumleft < 0:
-                set_speed(150)
+                robot.set_speed(150)
                 turnratio = float(accumright) / float(accumleft)
                 # print "Turn Ratio: ", turnratio
                 if turnratio <= 0.6:
-                         left_rot()
+                         robot.spin_left()
                          time.sleep(0.8)
                 elif turnratio >= 2:
-                         right_rot()
+                         robot.spin_right()
                          time.sleep(0.8)
-                bwd()
+                robot.backward()
                 time.sleep(0.5)
         elif accumright <= 0 and accumleft >= 0:
-                right_rot()
+                robot.spin_right()
                 time.sleep(.8)
         elif accumright >= 0 and accumleft <= 0:
-                left_rot()
+                robot.spin_left()
                 time.sleep(.8)
         elif accumright >= 0 and accumleft > 0:
                 turnratio = float(accumright) / float(accumleft)
                 # print "Turn Ratio: ", turnratio
                 if turnratio <= 0.6:
-                         left_rot()
+                         robot.spin_left()
                          time.sleep(0.8)
                 elif turnratio >= 2:
-                         right_rot()
+                         robot.spin_right()
                          time.sleep(0.8)
-                fwd()
+                robot.forward()
                 time.sleep(0.5)
         else:
                 stop()
@@ -4871,9 +4873,11 @@ def runconnectome():
 
 # Create the dictionary      
 createpostsynaptic()
+distanceSensor = init_distance_sensor(port='I2C')
+
 dist=0
-set_speed(120)
-print "Voltage: ", volt()
+robot.set_speed(120)
+print("Voltage: ", robot.volt())
 tfood = 0
 try:
 ### Here is where you would put in a method to stimulate the neurons ###
@@ -4883,13 +4887,13 @@ try:
     while True:
         ## Start comment - use a fixed value if you want to stimulte nose touch
         ## use something like "dist = 27" if you want to stop nose stimulation
-        dist = us_dist(15)
+        dist = distanceSensor.read()
         ## End Comment
 
         #Do we need to switch states at the end of each loop? No, this is done inside the runconnectome()
         #function, called inside each loop.
         if dist>0 and dist<30:
-            print "OBSTACLE (Nose Touch)", dist 
+            print("OBSTACLE (Nose Touch)", dist) 
             dendriteAccumulate("FLPR")
             dendriteAccumulate("FLPL")
             dendriteAccumulate("ASHL")
@@ -4903,7 +4907,7 @@ try:
             runconnectome()
         else:
             if tfood < 2:
-                    print "FOOD"
+                    print("FOOD")
                     print (thisState)
                     dendriteAccumulate("ADFL")
                     dendriteAccumulate("ADFR")
@@ -4923,8 +4927,8 @@ try:
        
 except KeyboardInterrupt:
     ## Start Comment
-    stop()
+    robot.stop()
     ## End Comment
-    print "Ctrl+C detected. Program Stopped!"
+    print("Ctrl+C detected. Program Stopped!")
     for pscheck in postsynaptic:
-        print (pscheck,' ',postsynaptic[pscheck][0],' ',postsynaptic[pscheck][1])
+        print((pscheck,' ',postsynaptic[pscheck][0],' ',postsynaptic[pscheck][1]))
